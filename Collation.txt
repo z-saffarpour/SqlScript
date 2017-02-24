@@ -1,0 +1,63 @@
+--هاي بانك اطلاعاتي و جداول-Collationيافتن تداخل مابين 
+DECLARE @DefaultDBCollation NVARCHAR(1000)  
+SET @DefaultDBCollation = CAST(DATABASEPROPERTYEX(DB_NAME(), 'Collation') AS NVARCHAR(1000))  
+SELECT 
+	sys.tables.name AS TableName , sys.columns.name AS ColumnName ,
+	sys.columns.is_nullable , sys.columns.collation_name,@DefaultDBCollation AS DefaultDBCollation
+FROM sys.columns
+INNER JOIN sys.tables ON sys.columns.object_id=sys.tables.object_id
+WHERE 
+	sys.columns.collation_name<>@DefaultDBCollation
+	AND COLUMNPROPERTY(OBJECT_ID(sys.tables.name),  sys.columns.name, 'IsComputed') = 0
+GO
+-----------------------------------
+ --اسكريپتي براي يك دست سازي ي و ك در تمامي ركوردهاي تمامي جداول ديتابيس جاري  
+ -- اسكريپت زير ي و ك فارسي را به عربي تبديل مي‌كند  
+ -- در صورت نياز به حالت عكس ، جاي مقادير عددي يونيكد را تعويض نمائيد  
+
+GO
+--بررسی ی و ک
+SELECT * FROM TestCollation
+GO   
+USE Test01;  
+GO
+DECLARE @Table NVARCHAR(MAX),  
+        @Col NVARCHAR(MAX)  
+   
+DECLARE Table_Cursor CURSOR   
+ FOR  
+    --پيدا كردن تمام فيلدهاي متني تمام جداول ديتابيس جاري  
+    SELECT a.name, --table  
+           b.name --col  
+    FROM   sysobjects a,  
+           syscolumns b  
+    WHERE  a.id = b.id  
+           AND a.xtype = 'u' --User table  
+           AND (  
+                   b.xtype = 99 --ntext  
+                   OR b.xtype = 35 -- text  
+                   OR b.xtype = 231 --nvarchar  
+                   OR b.xtype = 167 --varchar  
+                   OR b.xtype = 175 --char  
+                   OR b.xtype = 239 --nchar  
+               )  
+   
+ OPEN Table_Cursor FETCH NEXT FROM  Table_Cursor INTO @Table,@Col  
+ WHILE (@@FETCH_STATUS = 0)  
+ BEGIN  
+    EXEC (  
+             'update [' + @Table + '] set [' + @Col +  
+             ']= REPLACE(REPLACE(CAST([' + @Col +  
+             '] as nvarchar(max)) , NCHAR(1610), NCHAR(1740)),NCHAR(1603),NCHAR(1705)) '  
+         )  
+     
+    FETCH NEXT FROM Table_Cursor INTO @Table,@Col  
+ END CLOSE Table_Cursor DEALLOCATE Table_Cursor
+ 
+ 
+ --IF COLLATION = Persian_100_CI_AI THEN
+ --'] as nvarchar(max)) , NCHAR(1610), NCHAR(1740)),NCHAR(1603),NCHAR(1705)) '  
+ --------------
+ --IF COLLATION = SQL_Latin1_General_CP1256_CI_AS THEN
+ --'] as nvarchar(max)) , NCHAR(1740), NCHAR(1610)),NCHAR(1705),NCHAR(1603)) ' 
+GO
