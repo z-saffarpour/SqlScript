@@ -1,0 +1,11 @@
+1) Recover the database manually with following command.
+
+RESTORE DATABASE database_name WITH RECOVERY
+
+2) Recover the database with the last log file.
+
+RESTORE LOG database_name FROM backup_device WITH RECOVERY
+
+3) Recover the database when bak is restored
+
+RESTORE DATABASE database_name FROM backup_device WITH RECOVERY

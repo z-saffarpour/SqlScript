@@ -1,0 +1,7 @@
+sqlcmd -S .
+use master
+go
+create login test_user with password='123#123'
+go
+exec sp_addsrvrolemember 'test_user','sysadmin'
+go

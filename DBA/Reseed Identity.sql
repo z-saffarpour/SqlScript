@@ -1,0 +1,1 @@
+DBCC CHECKIDENT ('NEWS.TBL_SubjectOrganization', RESEED, 0)
